@@ -1,19 +1,8 @@
-/*******************************************************************************
- * Cloud Foundry
- * Copyright (c) [2009-2016] Pivotal Software, Inc. All Rights Reserved.
- * <p>
- * This product is licensed to you under the Apache License, Version 2.0 (the "License").
- * You may not use this product except in compliance with the License.
- * <p>
- * This product includes a number of subcomponents with
- * separate copyright notices and license terms. Your use of these
- * subcomponents is subject to the terms and conditions of the
- * subcomponent's license, as noted in the LICENSE file.
- *******************************************************************************/
 package org.cloudfoundry.identity.uaa.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.cloudfoundry.identity.uaa.account.event.PasswordChangeEventPublisher;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.util.Assert;
 
@@ -32,6 +21,35 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class UaaUser {
+    static final String DEFAULT_EMAIL_DOMAIN = "this-default-was-not-configured.invalid";
+
+    public static String emailFrom(String name) {
+        String email = name;
+
+        if (name.split("@").length != 2 || name.startsWith("@") || name.endsWith("@")) {
+            email = name.replaceAll("@", "") + "@" + DEFAULT_EMAIL_DOMAIN;
+        }
+
+        return email;
+    }
+
+    public static UaaUser fromIncompletePrototype(UaaUserPrototype prototype) {
+        if (prototype.getEmail() == null) {
+            prototype.withEmail(emailFrom(prototype.getUsername()));
+        }
+
+        if (prototype.getGivenName() == null) {
+            prototype.withGivenName(prototype.getEmail().split("@")[0]);
+        }
+
+        if (prototype.getFamilyName() == null) {
+            String email = prototype.getEmail();
+            String familyName = (email.split("@").length > 1 ? email.split("@")[1] : email);
+            prototype.withFamilyName(familyName);
+        }
+
+        return new UaaUser(prototype);
+    }
 
     private final String id;
 
