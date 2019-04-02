@@ -12,6 +12,8 @@
  *******************************************************************************/
 package org.cloudfoundry.identity.uaa.authentication.manager;
 
+import org.cloudfoundry.identity.uaa.account.event.PasswordChangeEventPublisher;
+import org.cloudfoundry.identity.uaa.user.UaaUserPrototype;
 import org.cloudfoundry.identity.uaa.zone.beans.IdentityZoneManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,60 +131,36 @@ public class LoginAuthenticationManager implements AuthenticationManager, Applic
     }
 
     protected UaaUser getUser(AuthzAuthenticationRequest req, Map<String, String> info) {
-        String name = req.getName();
-        String email = info.get("email");
-        String userId = info.get("user_id")!=null?info.get("user_id"):NotANumber;
-
-        if(info.get(OriginKeys.ORIGIN)!=null && info.get(OriginKeys.ORIGIN).equals(OriginKeys.UAA)){
+        if(info.get(OriginKeys.ORIGIN) != null && info.get(OriginKeys.ORIGIN).equals(OriginKeys.UAA)){
             throw new BadCredentialsException("uaa origin not allowed for external login server");
         }
-        String origin = info.get(OriginKeys.ORIGIN)!=null?info.get(OriginKeys.ORIGIN): OriginKeys.LOGIN_SERVER;
 
-        if (name == null && email != null) {
-            name = email;
-        }
-        if (name == null && NotANumber.equals(userId)) {
+        if (req.getName() == null && info.get("email") == null && info.get("user_id") == null) {
             throw new BadCredentialsException("Cannot determine username from credentials supplied");
-        } else if (name==null) {
-            //we have user_id, name is irrelevant
-            name="unknown";
         }
-        if (email == null) {
-            if (name.contains("@")) {
-                if (name.split("@").length == 2 && !name.startsWith("@") && !name.endsWith("@")) {
-                    email = name;
-                } else {
-                    email = name.replaceAll("@", "") + "@this-default-was-not-configured.invalid";
-                }
-            }
-            else {
-                email = name + "@this-default-was-not-configured.invalid";
-            }
-        }
-        String givenName = info.get("given_name");
-        if (givenName == null) {
-            givenName = email.split("@")[0];
-        }
-        String familyName = info.get("family_name");
-        if (familyName == null) {
-            familyName = (email.split("@").length > 1 ? email.split("@")[1] : email);
-        }
-        return new UaaUser(
-            userId,
-            name,
-            "" /*zero length password for login server */,
-            email,
-            UaaAuthority.USER_AUTHORITIES,
-            givenName,
-            familyName,
-            new Date(),
-            new Date(),
-            origin,
-            name,
-            false,
-            identityZoneManager.getCurrentIdentityZoneId(),
-            null,
-            null);
 
+        String email = info.get("email");
+        String userId = info.get("user_id");
+        String origin = info.get(OriginKeys.ORIGIN) != null ? info.get(OriginKeys.ORIGIN) : OriginKeys.LOGIN_SERVER;
+        String name = req.getName() == null ? email : req.getName();
+        
+        if (name == null) {
+            //we have user_id, name is irrelevant
+            name = "unknown";
+        }
+
+        return UaaUser.fromIncompletePrototype(
+            new UaaUserPrototype()
+                .withId(userId)
+                .withUsername(name)
+                .withEmail(email)
+                .withAuthorities(UaaAuthority.USER_AUTHORITIES)
+                .withCreated(new Date())
+                .withModified(new Date())
+                .withOrigin(origin)
+                .withExternalId(name)
+                .withVerified(false)
+                .withZoneId(identityZoneManager.getCurrentIdentityZoneId())
+        );
     }
 }

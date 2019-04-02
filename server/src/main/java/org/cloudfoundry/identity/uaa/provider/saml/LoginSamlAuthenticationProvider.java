@@ -14,6 +14,7 @@ package org.cloudfoundry.identity.uaa.provider.saml;
 
 
 import org.apache.commons.lang.StringUtils;
+import org.cloudfoundry.identity.uaa.account.event.PasswordChangeEventPublisher;
 import org.cloudfoundry.identity.uaa.authentication.UaaAuthentication;
 import org.cloudfoundry.identity.uaa.authentication.UaaPrincipal;
 import org.cloudfoundry.identity.uaa.authentication.event.IdentityProviderAuthenticationSuccessEvent;
@@ -416,16 +417,7 @@ public class LoginSamlAuthenticationProvider extends SAMLAuthenticationProvider 
             name="unknown";
         }
         if (email == null) {
-            if (name.contains("@")) {
-                if (name.split("@").length == 2 && !name.startsWith("@") && !name.endsWith("@")) {
-                    email = name;
-                } else {
-                    email = name.replaceAll("@", "") + "@this-default-was-not-configured.invalid";
-                }
-            }
-            else {
-                email = name + "@this-default-was-not-configured.invalid";
-            }
+            email = UaaUser.emailFrom(name);
         }
         if (givenName == null) {
             givenName = email.split("@")[0];

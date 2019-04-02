@@ -70,7 +70,7 @@ class LoginAuthenticationManagerTests {
     }
 
     @Test
-    void emailIsNullNameContainsLeadingCommericalAtReturnsNamePlusDefaultDomain() {
+    void emailIsNullNameContainsLeadingCommercialAtReturnsNamePlusDefaultDomain() {
         Map<String, String> attributes = new HashMap<>();
         AuthzAuthenticationRequest request = UaaAuthenticationTestFactory.getAuthenticationRequest("@user", true);
         UaaUser user = manager.getUser(request, attributes);
@@ -78,7 +78,7 @@ class LoginAuthenticationManagerTests {
     }
 
     @Test
-    void emailIsNullNameContainsTrailingCommericalAtReturnsNamePlusDefaultDomain() {
+    void emailIsNullNameContainsTrailingCommercialAtReturnsNamePlusDefaultDomain() {
         Map<String, String> attributes = new HashMap<>();
         AuthzAuthenticationRequest request = UaaAuthenticationTestFactory.getAuthenticationRequest("user@", true);
         UaaUser user = manager.getUser(request, attributes);
@@ -86,7 +86,7 @@ class LoginAuthenticationManagerTests {
     }
 
     @Test
-    void emailIsNullNameContainsMiddleCommericalAtReturnsNamePlusDefaultDomain() {
+    void emailIsNullNameContainsMiddleCommercialAtReturnsNamePlusDefaultDomain() {
         Map<String, String> attributes = new HashMap<>();
         AuthzAuthenticationRequest request = UaaAuthenticationTestFactory.getAuthenticationRequest("user@more-stuff", true);
         UaaUser user = manager.getUser(request, attributes);
